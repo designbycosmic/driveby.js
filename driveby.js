@@ -32,13 +32,13 @@
       var scrollOffsetFromTop = helpers.getTopDistance(context, element);
       var elementHeight       = element.offsetHeight;
 
-      return Math.round(((scrollOffsetFromTop / elementHeight) * 100) * 1e2) / 1e2;
+      return (Math.round(((scrollOffsetFromTop / elementHeight) * 100) * 1e2) / 1e2);
     },
     getBotProgress: function(context, element) {
       var scrollOffsetFromTop = helpers.getTopDistance(context, element) + context.outerHeight;
       var elementHeight       = element.offsetHeight;
 
-      return Math.round(((scrollOffsetFromTop / elementHeight) * 100) * 1e2) / 1e2;
+      return (Math.round(((scrollOffsetFromTop / elementHeight) * 100) * 1e2) / 1e2);
     },
     elementOnScreen: function(context, element) {
       var elementHeight  = element.offsetHeight;
@@ -53,7 +53,12 @@
       return (
         (scrollRect >= elementOffset) && (scrollOffset <= elementRect)
       );
-    }
+    },
+    getStatusByProgress: function(progress) {
+      if(progress < 0)        return 'above';
+      else if(progress > 100) return 'below';
+      else                    return 'over';
+    },
   };
 
   dom = {
@@ -103,6 +108,7 @@
   defaults = {
     context : window,
     element : null,
+    buffer  : 0,
     in      : utilities.noop,
     out     : utilities.noop,
     handler : utilities.noop
@@ -112,26 +118,35 @@
     return function() {
       if(!helpers.elementOnScreen(options.context, options.element)) {
         if(this.triggerInOut) {
-          options.out();
+          options.out(__scrollData);
           this.triggerInOut = false;
         }
 
         return;
       }
 
+      var topProgress = helpers.getTopProgress(options.context, options.element);
+      var botProgress = helpers.getBotProgress(options.context, options.element);
+      var closest     = (Math.abs(topProgress) < (Math.abs(botProgress) - 100)) ? 'top' : 'bot';
+
+      this.__scrollData = {
+        closest : closest,
+        progress: {
+          top : topProgress,
+          bot : botProgress,
+        },
+        status: {
+          top : helpers.getStatusByProgress(topProgress),
+          bot : helpers.getStatusByProgress(botProgress),
+        }
+      };
+
       if(!this.triggerInOut) {
-        options.in();
+        options.in(this.__scrollData);
         this.triggerInOut = true;
       }
 
-      var topProgress = helpers.getTopProgress(options.context, options.element);
-      var botProgress = helpers.getBotProgress(options.context, options.element);
-
-
-      options.handler({
-        top : topProgress,
-        bot : botProgress,
-      });
+      options.handler(this.__scrollData);
     };
   };
 
@@ -142,7 +157,7 @@
 
     dom.bind(this.options.context, 'scroll', this.handler);
 
-    this.remove = function() {
+    this.unbind = function() {
       this.options.context.removeEventListener('scroll', this.handler);
     }
   };
