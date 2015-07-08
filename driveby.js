@@ -6,6 +6,7 @@
   var defaults;
 
   var handlerFactory;
+  var initialize;
 
   utilities = {
     noop: function() {},
@@ -91,8 +92,8 @@
   };
 
   handlerFactory = function(options) {
-    return function() {
-      if(!helpers.elementOnScreen(options.context, options.element)) {
+    var elementWatcher = function(_element) {
+      if(!helpers.elementOnScreen(options.context, _element)) {
         if(this.triggerInOut) {
           options.out(__scrollData);
           this.triggerInOut = false;
@@ -101,8 +102,8 @@
         return;
       }
 
-      var topProgress = helpers.getTopProgress(options.context, options.element, options.buffer);
-      var botProgress = helpers.getBotProgress(options.context, options.element, options.buffer);
+      var topProgress = helpers.getTopProgress(options.context, _element, options.buffer);
+      var botProgress = helpers.getBotProgress(options.context, _element, options.buffer);
       var closest     = (Math.abs(topProgress) < (Math.abs(botProgress) - 100)) ? 'top' : 'bot';
 
       this.__scrollData = {
@@ -122,16 +123,37 @@
         this.triggerInOut = true;
       }
 
-      options.handler(this.__scrollData);
+      options.handler.call(_element, this.__scrollData);
     };
+
+    return (function() {
+      for(var i = 0; i < options.element.length; i++) {
+        elementWatcher(options.element[i]);
+      }
+    });
   };
 
   function DriveBy(options) {
     this.options = utilities.objectExtend(defaults, options || {});
 
+    // Check the compatibility of the elements provided.
+
+    if(!(this.options.element instanceof HTMLElement) &&
+       !(this.options.element instanceof HTMLCollection)) {
+      return console.error('Invalid HTML Element provided.');
+    }
+
+    if(this.options.element instanceof HTMLElement) {
+      this.options.element = [this.options.element];
+    }
+
     this.handler = handlerFactory(this.options);
 
+    // Bind the context scroll event to the handler
+
     dom.bind(this.options.context, 'scroll', this.handler);
+
+    // Expose instance methods
 
     this.unbind = function() {
       this.options.context.removeEventListener('scroll', this.handler);
