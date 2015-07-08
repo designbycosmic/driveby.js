@@ -16,7 +16,7 @@ Simple scroll tracking relative to on-page elements.
 ### Instance Methods
 
 ```Javascript
-var section = document.getElementsByClassName('.section');
+var section = document.getElementsByClassName('section');
 var sectionScroll = new DriveBy({
   element: section,
   in: function() {
