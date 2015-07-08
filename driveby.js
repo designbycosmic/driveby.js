@@ -28,13 +28,13 @@
 
       return scrollOffsetFromTop;
     },
-    getTopProgress: function(context, element) {
+    getTopProgress: function(context, element, buffer) {
       var scrollOffsetFromTop = helpers.getTopDistance(context, element);
       var elementHeight       = element.offsetHeight;
 
       return (Math.round(((scrollOffsetFromTop / elementHeight) * 100) * 1e2) / 1e2);
     },
-    getBotProgress: function(context, element) {
+    getBotProgress: function(context, element, buffer) {
       var scrollOffsetFromTop = helpers.getTopDistance(context, element) + context.outerHeight;
       var elementHeight       = element.offsetHeight;
 
@@ -62,15 +62,6 @@
   };
 
   dom = {
-    find: function(scope, selector, all) {
-      all = (typeof all === 'boolean') ? all : false;
-
-      if(all) {
-        return (scope || document).querySelectorAll(selector);
-      } else {
-        return (scope || document).querySelector(selector);
-      }
-    },
     bind: function($target, type, callback, useCapture) {
       var namespace = type;
 
@@ -87,21 +78,6 @@
       } else if($target instanceof HTMLElement || $target === window) {
         $target.addEventListener(type, callback, !!useCapture);
       }
-    },
-    parent: function($element, tagName) {
-      if(!$element.parentNode) { return; }
-      if($element.parentNode.tagName.toLowerCase() === tagName.toLowerCase()) {
-        return $element.parentNode;
-      }
-
-      return dom.parent($element.parentNode, tagName);
-    },
-    insertBefore: function($targetElement, $elementToInsert) {
-      var $targetParent = $targetElement.parentNode;
-
-      if(!$targetParent) { return; }
-
-      $targetParent.insertBefore($targetElement, $elementToInsert);
     },
   };
 
@@ -125,8 +101,8 @@
         return;
       }
 
-      var topProgress = helpers.getTopProgress(options.context, options.element);
-      var botProgress = helpers.getBotProgress(options.context, options.element);
+      var topProgress = helpers.getTopProgress(options.context, options.element, options.buffer);
+      var botProgress = helpers.getBotProgress(options.context, options.element, options.buffer);
       var closest     = (Math.abs(topProgress) < (Math.abs(botProgress) - 100)) ? 'top' : 'bot';
 
       this.__scrollData = {
@@ -159,7 +135,7 @@
 
     this.unbind = function() {
       this.options.context.removeEventListener('scroll', this.handler);
-    }
+    };
   };
 
   parent.DriveBy = DriveBy;
