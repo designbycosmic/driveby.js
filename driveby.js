@@ -6,7 +6,6 @@
   var defaults;
 
   var handlerFactory;
-  var initialize;
 
   utilities = {
     noop: function() {},
