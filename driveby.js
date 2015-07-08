@@ -95,7 +95,7 @@
     var elementWatcher = function(_element) {
       if(!helpers.elementOnScreen(options.context, _element)) {
         if(this.triggerInOut) {
-          options.out(__scrollData);
+          options.out.call(_element, __scrollData);
           this.triggerInOut = false;
         }
 
@@ -119,7 +119,7 @@
       };
 
       if(!this.triggerInOut) {
-        options.in(this.__scrollData);
+        options.in.call(_element, this.__scrollData);
         this.triggerInOut = true;
       }
 
